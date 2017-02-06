@@ -1,0 +1,165 @@
+<?php
+
+/**
+ * @file
+ * The main file for the tripal go module.
+ */
+
+// GAF (GO Annotation File) Node functionality
+require_once 'includes/go_tool.node.inc';
+
+// Functions specific to themeing (ie: preprocess)
+require_once 'theme/go_tool.theme.inc';
+
+// Application Programmers Interface
+require_once 'api/go_tool.api.inc';
+
+// Administration for furture
+require_once 'includes/go_tool.admin.inc';
+
+/**
+ * Implements hook_menu().
+ */
+function go_tool_menu() {
+  // GO form
+  $items['goenrich'] = array(
+    'title' => 'GO term enrichment analysis',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('go_tool_enrich_form', 1, 2),
+    'access arguments' => array('access content'),
+    'file' => 'includes/go_tool.form_goenrich.inc',
+    'type' => MENU_NORMAL_ITEM,
+  );
+
+  // GO dataset Node 
+  // -- add GAF file to specific type of content
+  // -- these GAF file will be used as GO dataset for analysis
+  $items['node__gaf'] = array(
+    'template' => 'node--gaf',
+    'render element' => 'node',
+    'base hook' => 'node',
+    'path' => 'themex',
+  );
+
+  // GO Results page
+  $items['goenrich/report/%'] = array(
+    'title' => 'GO term enrichment results',
+    'page callback' => 'show_go_enrich_output',
+    'page arguments' => array(2),
+    'access arguments' => array('access content'),
+    'type' => MENU_CALLBACK,
+  );
+
+  // GO Tool admin for furture
+  $items['admin/tripal/extension/tripal_go'] = array(
+    'title' => 'Tripal GO User Interface',
+    'description' => 'Provides an interface allowing users to execute their own GO analysis.',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('go_tool_admin_form'),
+    'access arguments' => array('administer tripal'),
+    'type' => MENU_NORMAL_ITEM,
+  );
+
+  // help
+  $items['admin/tripal/extension/tripal_go/help'] = array(
+    'title' => 'Help',
+    'page callback' => 'theme',
+    'page arguments' => array('go_tool_help'),
+    'access arguments' => array('administer tripal'),
+    'type' => MENU_LOCAL_TASK,
+  );
+
+  return $items;
+}
+
+/**
+ * Implements hook_theme().
+ */
+function go_tool_theme() {
+
+  $items = array();
+  $path = drupal_get_path('module', 'go_tool');
+
+  // explain the detail
+  // this hook create a array of theme through array item
+  // the key in array is like show_goenrich_report
+  // the value tell drupal where to find template page 
+  //   template: template name, and file must has suffix .tpl.php 
+  //   path: where to find template file 
+  // use theme('key') to call the them
+
+  // Displays the GO enrich results for each job
+  $items['show_goenrich_report'] = array(
+    'template' => 'goenrich_report',
+    'path' => "$path/theme",
+  );
+
+  $items['goenrich_report_pending'] = array(
+    'template' => 'goenrich_report_pending',
+    'path' => "$path/theme",
+  );
+
+  // Module Help
+  $items['go_tool_help'] = array(
+    'template' => 'go_tool_help',
+    'path' => "$path/theme",
+  );
+
+  return $items;
+}
+
+/**
+ * Implements hook_help().
+ */
+function go_tool_help($path, $arg) {
+  if ($path == 'admin/help#go_tool') {
+    return theme('go_tool_help');
+  }
+}
+
+/**
+ * Facilitate presenting the result of the go enrichment 
+ *
+ * @param $job_id
+ *  The tripal job_id of the go enrich job previously submitted
+ *
+ * @return $result
+ *  Return HTML output of the go enrich results to be displayed to the user
+ *
+ */
+
+function show_go_enrich_output($job_string) {
+
+  // go enrich analysis runs as a Tripal job. As such we need to determine whether the current
+  // analysis is in the queue, running or complete in order to determine what to show the user
+  //decode the job_id
+  $job_id = go_tool_reveal_secret($job_string);
+  $job = tripal_get_job($job_id);
+
+  // 1) Job is in the Queue
+  if ($job->start_time === NULL AND $job->end_time == NULL) {
+
+    return theme('goenrich_report_pending', array('status_code' => 0, 'status' => 'Pending'));
+  }
+  // 2) Job has been Cancelled
+  elseif ($job->status == 'Cancelled') {
+
+    return theme('goenrich_report_pending', array('status_code' => 999, 'status' => 'Cancelled'));
+  }
+  // 3) Job is Complete
+  elseif ($job->end_time !== NULL) {
+
+    // Return the Results :)
+    return theme('show_goenrich_report', array('job_id' => $job_id));
+
+  }
+  // 4) Job is in Progress
+  else {
+
+    return theme('goenrich_report_pending', array('status_code' => 1, 'status' => 'Running'));
+  }
+
+
+  return '';
+}
+

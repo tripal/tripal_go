@@ -1,0 +1,7 @@
+name = GO Tool
+description = Provides a user interface to allow your to perform GO enrichment analysis
+configure = admin/tripal/extension/tripal_go/go_tool
+project = tripal_go
+package = Tripal Extensions
+core = 7.x
+

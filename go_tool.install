@@ -1,0 +1,77 @@
+<?php
+
+/**
+ * @file
+ * Contains hooks to handle installation of this module.
+ *
+ */
+
+/**
+ * Implements hook_install().
+ * create folder tripal_goenrich under: default/files/tripal/
+ * create folder tripal_goclassify under: default/files/tripal/
+ */
+function go_tool_install() {
+   tripal_create_files_dir('tripal_goenrich');
+   tripal_create_files_dir('tripal_goclassify');
+}
+
+/**
+ * Implements hook_schema().
+ * Create the gaf table for storing GO Annotation File related to gaf nodes.
+ *
+ * NOTE: This hook is called via Drupal magic during the installation process and no longer
+ * needs to be called explicitly in hook_install().
+ */
+function go_tool_schema() {
+
+  // table for store GAF file name and path
+  $schema['gaf'] = array(
+    'description' => t('The table for gaf node'),
+    'fields' => array(
+      'nid' => array(
+        'description' => t('The primary identifier for a node.'),
+        'type' => 'serial',
+        'unsigned' => true,
+        'not null' => true,
+      ),
+      'name' => array(
+        'description' => t('The human-readable name of the GAF.'),
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => true,
+      ),
+      'path' => array(
+        'description' => t('The full path and filename prefix of the GAF.'),
+        'type' => 'varchar',
+        'length' => 1023,
+        'not null' => true,
+      ),
+      'dbtype' => array(
+        'description' => t('Type of the GAF. Should be either gene or unigene.'),
+        'type' => 'varchar',
+        'length' => 15,
+        'not null' => true,
+      ),
+      'idexample' => array(
+        'description' => t('example IDs.'),
+        'type' => 'varchar',
+        'length' => 1023,
+        'not null' => true,
+      ),
+    ),
+    
+    'indexes' => array(
+      'name' => array('name'),
+    ),
+    
+    'primary key' => array('nid'),
+      
+    'unique keys' => array(
+      'nid' => array('nid'),
+    ),
+  );
+  
+  return $schema;
+}
+
