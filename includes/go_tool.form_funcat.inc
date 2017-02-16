@@ -6,9 +6,9 @@
  */
 
 /**
- * generate form for go enrichment analysis.
+ * generate form for go slim gene classification.
  */
-function go_tool_enrich_form($form, $form_state) {
+function go_tool_funcat_form($form, $form_state) {
 
   //* choose GO dataset
   //*   An array where the nid is the key and the value is array
@@ -46,7 +46,7 @@ function go_tool_enrich_form($form, $form_state) {
     '#options' => $options,
     '#default_value' => 'SELECT_DB',
     '#ajax' => array(
-      'callback' => 'ajax_go_tool_enrich_example_id_callback',
+      'callback' => 'ajax_go_tool_funcat_example_id_callback',
       'wrapper'  => 'id-textarea',
       'method'   => 'replace',
       'effect'   => 'fade',
@@ -58,8 +58,7 @@ function go_tool_enrich_form($form, $form_state) {
   $form['query'] = array(
     '#type' => 'fieldset',
     '#title' => t('Enter the list of IDs.'),
-    '#description' => t('description of input ids'),
-    '#collapsible' => TRUE,
+    '#collapsible' => FALSE,
     '#collapsed' => FALSE,
   );
 
@@ -70,7 +69,7 @@ function go_tool_enrich_form($form, $form_state) {
     '#prefix' => '<span style="float: right;">',
     '#suffix' => '</span>',
     '#ajax' => array(
-      'callback' => 'ajax_go_tool_enrich_example_id_callback',
+      'callback' => 'ajax_go_tool_funcat_example_id_callback',
       'wrapper'  => 'id-textarea',
       'method'   => 'replace',
       'effect'   => 'fade',
@@ -115,35 +114,6 @@ function go_tool_enrich_form($form, $form_state) {
     '#default_value' => t('P'),
   );
 
-  $form['choose_correction'] = array(
-    '#type' => 'radios',
-    '#title' => t('Choose the p value correction method:'),
-    '#options' => array(
-       'bonferroni' => t('Bonferroni'),
-	   'simulation' => t('Simulation'),
-       'FDR' => t('FDR'),
-     ),
-    '#default_value' => t('simulation'),
-  );
-
-  $form['cutoff_pvalue'] = array(
-    '#type' => 'textfield',
-    '#title' => t('Enter a cutoff P-Value for Significant represented GO Terms:'), 
-    '#default_value' => '0.05',
-    '#maxlength' => 20,
-    '#required' => TRUE,
-  );
-
-  $form['choose_pic'] = array(
-    '#type' => 'radios',
-    '#title' => t('Display picture showing GO DAG:'),
-    '#options' => array(
-       'yes' => t('Yes'),
-       'no' => t('No'),
-     ),
-    '#default_value' => t('no'),
-  );
-
   // Submit
   //.........................
   $form['submit'] = array(
@@ -160,9 +130,9 @@ function go_tool_enrich_form($form, $form_state) {
 /**
  * Validate the user options submitted via the above form.
  *
- * @see go_tool_enrhich_form().
+ * @see go_tool_funcat_form().
  */
-function go_tool_enrich_form_validate($form, &$form_state) {
+function go_tool_funcat_form_validate($form, &$form_state) {
 
   // Validate Query
   //----------------
@@ -211,47 +181,33 @@ function go_tool_enrich_form_validate($form, &$form_state) {
   if (!empty($form_state['values']['ID']) && $form_state['values']['ID'] == 'unknown dataset type') {
     form_set_error('query', t('No gene IDs given.')); 
   } 
-
-}//go_tool_enrich_form_validate
+}
 
 
 /**
  * Process the user options submitted.
  *
- * @see go_tool_enrich_form().
+ * @see go_tool_funcat_form().
  */
-function go_tool_enrich_form_submit($form, &$form_state) {
+function go_tool_funcat_form_submit($form, &$form_state) {
 
   $error = FALSE;
 
-  // First set defaults.
-  $goenrichjob = array(
-    'job_id' => NULL,
-    'go_annotation' => (isset($form_state['values']['SELECT_GO_DATASET'])) ? $form_state['values']['SELECT_GO_DATASET'] : NULL,
-    'gene_list' => NULL,
-    'result_file' => NULL,
-    'options' => serialize(array())
-  );
-
   // QUERY
-  //-------------------------
-  // BLAST can only take the query as a file;
-  // therefore, if it was submitted via the textfield we need to create a file containing
-  // the submitted sequence.
+  $gene_list = NULL;
   if (isset($form_state['qFlag'])) {
     if ($form_state['qFlag'] == 'seqQuery') {
       $seq_content = $form_state['values']['ID'];
-      $goenrichjob['gene_list'] = '/tmp/' . date('YMd_His') . '_GO_gene_list.txt';
-      file_put_contents ($goenrichjob['gene_list'], $seq_content);
+      $gene_list = '/tmp/' . date('YMd_His') . '_GO_gene_list.txt';
+      file_put_contents($gene_list, $seq_content);
     }
     elseif ($form_state['qFlag'] == 'upQuery') {
-      $goenrichjob['gene_list'] = $form_state['upQuery_path'];
+      $gene_list = $form_state['upQuery_path'];
     }
   }
 
   // GO annotation dataset
   $selected_db = $form_state['values']['SELECT_GO_DATASET'];
-  $goenrichjob['go_annotation'] = $selected_db; //GAF_dataset_path_full;
 
   // Determine the path to the GAF with extension.
   if (!is_readable($selected_db)) {
@@ -271,74 +227,44 @@ function go_tool_enrich_form_submit($form, &$form_state) {
   // OPTIONS
   $options = array(
      'a' => $form_state['values']['choose_aspect'],
-     'c' => $form_state['values']['choose_correction'],
-     'p' => $form_state['values']['cutoff_pvalue'],
-     'm' => $form_state['values']['choose_pic'],
-     't' => $form_state['values']['gaf_type'],
   );
-
-  $goenrichjob['options'] = serialize($options);
-
-  $goenrich_program = 'go_enrich_tool.pl';
 
   // SUBMIT JOB TO TRIPAL
   //-------------------------
-  // Actually submit the BLAST Tripal Job
   if (!$error) {
-    // BLAST target exists.
     global $user;
 
-    // We want to save all result files (.asn, .xml, .tsv, .html) in the public files directory.
-    // Usually [drupal root]/sites/default/files.
+    // set output file
     $output_dir = variable_get('file_public_path', conf_path() . '/files')
-      . DIRECTORY_SEPARATOR . 'tripal' . DIRECTORY_SEPARATOR . 'tripal_goenrich';
-    $output_file = $output_dir . DIRECTORY_SEPARATOR . date('YMd_His') . '.goenrich.html';
+      . DIRECTORY_SEPARATOR . 'tripal' . DIRECTORY_SEPARATOR . 'tripal_goclassify';
+    $output_file = $output_dir . DIRECTORY_SEPARATOR . date('YMd_His') . '.funcat';
 
     $job_args = array(
-      'program' => $goenrich_program,
-      'gene_list' => $goenrichjob['gene_list'],
-      'go_annotation' => $goenrichjob['go_annotation'],
+      'program' => 'go_funcat_tool.pl',
+      'gene_list' => $gene_list,
+      'go_annotation' => $selected_db,
       'output_file' => $output_file,
       'options' => $options
     );
 
     $job_id = tripal_add_job(
-      t('GO enrichment for @go_annotation', array('@go_annotation' => $goenrichjob['go_annotation'])),
+      t('GO gene classifcation for @go_annotation', array('@go_annotation' => $selected_db )),
       'tripal_go',
-      'run_goenrich_tripal_job',
+      'run_funcat_tripal_job',
       $job_args,
       $user->uid
     );
 
-    $goenrichjob['result_file'] = $output_file;
-    $goenrichjob['job_id'] = $job_id;
-
     //Encode the job_id
-    // the encode id is ordered in tripal jobs
     $job_encode_id = go_tool_make_secret($job_id);
-
-    // RECENT JOBS
-    //-------------------------
-    if (!isset($_SESSION['goenrich_jobs'])) {
-      $_SESSION['goenrich_jobs'] = array();
-    }
-    $_SESSION['goenrich_jobs'][] = $job_encode_id;
-
-    // NOTE: Originally there was a call to tripal_launch_jobs() here. That should
-    // NEVER be done since it runs possibly long jobs in the page load causing time-out
-    // issues. If you do not want to run tripal jobs manually, look into installing
-    // Tripal daemon which will run jobs as they're submitted or set up a cron job to
-    // launch the tripal jobs on a specified schedule.
-
-    // Redirect to the BLAST results page
-    drupal_goto("goenrich/report/$job_encode_id");
+    drupal_goto("funcat/report/$job_encode_id");
   }
 }
 
 /**
  * AJAX: Replace the ID textarea with one containing an example.
  */
-function ajax_go_tool_enrich_example_id_callback($form, $form_state) {
+function ajax_go_tool_funcat_example_id_callback($form, $form_state) {
   $dataset = $form_state['values']['SELECT_GO_DATASET'];
 
   $db_type = 'unknown GAF type';
@@ -350,16 +276,12 @@ function ajax_go_tool_enrich_example_id_callback($form, $form_state) {
     $form['gaf_type']['#value'] = $db_type;
   }
 
-  // If the Show Example checkbox is true then put the example in the textfield
   if ($form_state['values']['example_id']) {
     $form['query']['ID']['#value'] = $example_ids;
   }
-  // Otherwise we want to remove the already displayed example.
   else {
     $form['query']['ID']['#value'] = '';
   }
-
-  //dpm($form);
 
   return $form['query']['ID'];
 }

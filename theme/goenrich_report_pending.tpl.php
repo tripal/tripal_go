@@ -30,28 +30,28 @@ Drupal.behaviors.blastuiSetTimeout = {
 <?php
   // JOB IN QUEUE
   if ($status_code === 0) {
-    drupal_set_title('GO enrichment Job in Queue');
+    drupal_set_title('Job in Queue for GO Tool');
 ?>
 
-  <p>Your GO enrichment has been registered and will be started shortly. This page will automatically refresh.</p>
+  <p>Your GO Tool has been registered and will be started shortly. This page will automatically refresh.</p>
 
 <?php
   }
   // JOB IN PROGRESS
   elseif ($status_code === 1) {
-    drupal_set_title('GO enrichment Job in Progress');
+    drupal_set_title('Job in Progress for GO Tool');
 ?>
 
-  <p>Your GO enrichment job is currently running. The results will be listed here as soon as it completes. This page will automatically refresh.</p>
+  <p>Your GO Tool job is currently running. The results will be listed here as soon as it completes. This page will automatically refresh.</p>
 
 <?php
   }
   // JOB CANCELLED
   elseif ($status_code === 999) {
-    drupal_set_title('GO enrichment Job Cancelled');
+    drupal_set_title('Job Cancelled for GO Tool');
 ?>
 
-  <p>Unfortunately your GO enrichment job has been cancelled by an Administrator.  This page will automatically refresh.</p>
+  <p>Unfortunately your GO Tool job has been cancelled by an Administrator.  This page will automatically refresh.</p>
 
 <?php
  }

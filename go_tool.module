@@ -21,13 +21,23 @@ require_once 'includes/go_tool.admin.inc';
  * Implements hook_menu().
  */
 function go_tool_menu() {
-  // GO form
+  // GO enrich form
   $items['goenrich'] = array(
     'title' => 'GO term enrichment analysis',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('go_tool_enrich_form', 1, 2),
     'access arguments' => array('access content'),
     'file' => 'includes/go_tool.form_goenrich.inc',
+    'type' => MENU_NORMAL_ITEM,
+  );
+
+  // GO slim gene classification form
+  $items['funcat'] = array(
+    'title' => 'GO slim gene classification',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('go_tool_funcat_form', 1, 2),
+    'access arguments' => array('access content'),
+    'file' => 'includes/go_tool.form_funcat.inc',
     'type' => MENU_NORMAL_ITEM,
   );
 
@@ -38,13 +48,22 @@ function go_tool_menu() {
     'template' => 'node--gaf',
     'render element' => 'node',
     'base hook' => 'node',
-    'path' => 'themex',
+    'path' => 'themego',
   );
 
-  // GO Results page
+  // GO enrich result page
   $items['goenrich/report/%'] = array(
     'title' => 'GO term enrichment results',
     'page callback' => 'show_go_enrich_output',
+    'page arguments' => array(2),
+    'access arguments' => array('access content'),
+    'type' => MENU_CALLBACK,
+  );
+
+  // GO slim gene classification result page
+  $items['funcat/report/%'] = array(
+    'title' => 'GO slim gene classification results',
+    'page callback' => 'show_go_funcat_output',
     'page arguments' => array(2),
     'access arguments' => array('access content'),
     'type' => MENU_CALLBACK,
@@ -94,6 +113,13 @@ function go_tool_theme() {
     'path' => "$path/theme",
   );
 
+  // Displays the GO funcat results for each job
+  $items['show_funcat_report'] = array(
+    'template' => 'funcat_report',
+    'path' => "$path/theme",
+  );
+
+  // job pending page
   $items['goenrich_report_pending'] = array(
     'template' => 'goenrich_report_pending',
     'path' => "$path/theme",
@@ -130,36 +156,49 @@ function go_tool_help($path, $arg) {
 
 function show_go_enrich_output($job_string) {
 
-  // go enrich analysis runs as a Tripal job. As such we need to determine whether the current
-  // analysis is in the queue, running or complete in order to determine what to show the user
-  //decode the job_id
   $job_id = go_tool_reveal_secret($job_string);
   $job = tripal_get_job($job_id);
 
   // 1) Job is in the Queue
   if ($job->start_time === NULL AND $job->end_time == NULL) {
-
     return theme('goenrich_report_pending', array('status_code' => 0, 'status' => 'Pending'));
   }
   // 2) Job has been Cancelled
   elseif ($job->status == 'Cancelled') {
-
     return theme('goenrich_report_pending', array('status_code' => 999, 'status' => 'Cancelled'));
   }
   // 3) Job is Complete
   elseif ($job->end_time !== NULL) {
-
-    // Return the Results :)
     return theme('show_goenrich_report', array('job_id' => $job_id));
-
   }
   // 4) Job is in Progress
   else {
-
     return theme('goenrich_report_pending', array('status_code' => 1, 'status' => 'Running'));
   }
+  return '';
+}
 
+function show_go_funcat_output($job_string) {
 
+  $job_id = go_tool_reveal_secret($job_string);
+  $job = tripal_get_job($job_id);
+
+  // 1) Job is in the Queue
+  if ($job->start_time === NULL AND $job->end_time == NULL) {
+    return theme('goenrich_report_pending', array('status_code' => 0, 'status' => 'Pending'));
+  }
+  // 2) Job has been Cancelled
+  elseif ($job->status == 'Cancelled') {
+    return theme('goenrich_report_pending', array('status_code' => 999, 'status' => 'Cancelled'));
+  }
+  // 3) Job is Complete
+  elseif ($job->end_time !== NULL) {
+    return theme('show_funcat_report', array('job_id' => $job_id));
+  }
+  // 4) Job is in Progress
+  else {
+    return theme('goenrich_report_pending', array('status_code' => 1, 'status' => 'Running'));
+  }
   return '';
 }
 

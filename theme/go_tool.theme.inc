@@ -2,30 +2,17 @@
 
 /**
  * @file
- * This file contains functions specifically related to theme-ing the BLAST module
+ * This file contains functions specifically related to theme-ing the GO Tool module
  */
-
 
 /**
  * Preprocess function for the show_goenrich_report.tpl.php
  *
- * Use this function to prepare variables for use in the template,
- * as well as to add css/javascript needed.
- *
  * @param $vars
  *   The variables currently available to the template.
  *
- * after preprocess: 
- * the var tripal_job, html_path, html_info could be directly use in them: show_goenrich_report
- *   theme show_goenrich_report point to template: goenrich_report
- *   so, these var is directly used in goenrich_report template
  */
 function go_tool_preprocess_show_goenrich_report(&$vars) {
-
-  // Add CSS and Javascript files
-  $path = drupal_get_path('module', 'go_tool');
-  // drupal_add_css($path . '/theme/css/your_css.css');
-  // drupal_add_js('https://code.jquery.com/jquery-1.12.4.min.js');
 
   $tripal_job = tripal_get_job($vars['job_id']);
   $vars['tripal_job'] = $tripal_job;
@@ -36,6 +23,34 @@ function go_tool_preprocess_show_goenrich_report(&$vars) {
   # load the html info to var
   if (is_readable($vars['html_path'])) {
 	$vars['html_info'] = file_get_contents($vars['html_path']);
+  }
+}
+
+function go_tool_preprocess_show_funcat_report(&$vars) {
+
+  $tripal_job = tripal_get_job($vars['job_id']);
+  $vars['tripal_job'] = $tripal_job;
+  $tripal_args = unserialize($tripal_job->arguments);
+  $output_gid = DRUPAL_ROOT . DIRECTORY_SEPARATOR . $tripal_args['output_file'] . ".goslim.txt";
+  $output_tab = DRUPAL_ROOT . DIRECTORY_SEPARATOR . $tripal_args['output_file'] . ".goslim.tab.txt";
+
+  // put output result to array
+  if (is_readable($output_tab)) {
+    $result_table = array();
+    $fp = fopen($output_tab,'r');
+    if (($headers = fgetcsv($fp, 0, "\t")) !== FALSE) {
+      if ($headers) {
+        while (($line = fgetcsv($fp, 0, "\t")) !== FALSE) {
+          if ($line) {
+            if (sizeof($line)==sizeof($headers)) {
+              $result_table[] = array_combine($headers,$line);
+            }
+          }
+        }
+      }
+    }
+    fclose($fp);
+    $vars['result_table'] = $result_table;
   }
 }
 
