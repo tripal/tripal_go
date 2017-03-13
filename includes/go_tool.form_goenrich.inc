@@ -279,7 +279,7 @@ function go_tool_enrich_form_submit($form, &$form_state) {
 
   $goenrichjob['options'] = serialize($options);
 
-  $goenrich_program = 'go_enrich_tool.pl';
+  $goenrich_program = DRUPAL_ROOT . DIRECTORY_SEPARATOR . drupal_get_path('module', 'go_tool') . DIRECTORY_SEPARATOR . 'go_enrich_tool.pl';
 
   // SUBMIT JOB TO TRIPAL
   //-------------------------

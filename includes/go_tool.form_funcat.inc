@@ -239,8 +239,10 @@ function go_tool_funcat_form_submit($form, &$form_state) {
       . DIRECTORY_SEPARATOR . 'tripal' . DIRECTORY_SEPARATOR . 'tripal_goclassify';
     $output_file = $output_dir . DIRECTORY_SEPARATOR . date('YMd_His') . '.funcat';
 
+    $funcat_program = $goenrich_program = DRUPAL_ROOT . DIRECTORY_SEPARATOR . drupal_get_path('module', 'go_tool') . DIRECTORY_SEPARATOR . 'go_funcat_tool.pl';
+
     $job_args = array(
-      'program' => 'go_funcat_tool.pl',
+      'program' => $funcat_program,
       'gene_list' => $gene_list,
       'go_annotation' => $selected_db,
       'output_file' => $output_file,

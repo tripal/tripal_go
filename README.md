@@ -3,14 +3,13 @@
 
 Requirement Perl module
 
-GO::Parser
+sudo apt-get install xsltproc
+install GO::Parser or install go-perl-0.15
 
-1. create soft link of __go_enrich_tool.pl__ to path. Example:
-
+1. install this module using below command
 ```
-ln -s /var/www/html/sites/all/modules/tripal_go/go_enrich_tool.pl  /usr/local/bin
+drush pm-enable tripal_go
 ```
 
-2. install tripal_go module
+2. add content for GO Database
 
-3. add content for GO Database
