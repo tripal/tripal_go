@@ -44,11 +44,12 @@ function go_tool_menu() {
   // GO dataset Node 
   // -- add GAF file to specific type of content
   // -- these GAF file will be used as GO dataset for analysis
+  $path = drupal_get_path('module', 'go_tool');
   $items['node__gaf'] = array(
     'template' => 'node--gaf',
     'render element' => 'node',
     'base hook' => 'node',
-    'path' => 'themego',
+    'path' => $path . '/theme',
   );
 
   // GO enrich result page
