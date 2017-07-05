@@ -10,6 +10,14 @@
  */
 function go_tool_funcat_form($form, $form_state) {
 
+  //load default value from RNASeq 
+  $default_lists = '';
+  if(module_exists('tripal_rnaseq')) {
+    if (isset($_SESSION['tripal_rnaseq_analysis']['genes_str'])) {
+      $default_lists = $_SESSION['tripal_rnaseq_analysis']['genes_str'];
+    }
+  }
+
   //* choose GO dataset
   //*   An array where the nid is the key and the value is array
   //*   array: 
@@ -81,6 +89,7 @@ function go_tool_funcat_form($form, $form_state) {
     '#type' => 'textarea',
     '#title' => t('Enter gene IDs'),
     '#description'=>t('Enter gene IDs in the text area.'),
+    '#default_value' => $default_lists,
     '#prefix' => '<div id="id-textarea">',
     '#suffix' => '</div>',
   );
