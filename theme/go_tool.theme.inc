@@ -34,7 +34,25 @@ function go_tool_preprocess_show_funcat_report(&$vars) {
   $output_gid = DRUPAL_ROOT . DIRECTORY_SEPARATOR . $tripal_args['output_file'] . ".goslim.txt";
   $output_tab = DRUPAL_ROOT . DIRECTORY_SEPARATOR . $tripal_args['output_file'] . ".goslim.tab.txt";
 
-  // put output result to array
+  // put output table gene list to array
+  if (is_readable($output_gid)) {
+    $category = array();
+    $fp = fopen($output_gid, 'r');
+    while(($line = fgetcsv($fp, 0, "\t")) !== FALSE) {
+      if (sizeof($line) == 2) {
+        $gene = $line[0];
+        $goid = $line[1];
+        if(!isset($category[$goid])) {
+           $category[$goid] = array();
+        }
+        $category[$goid][] = $gene;
+      }
+    }
+    fclose($fp);
+    $vars['category'] = $category;
+  } 
+
+  // put output table result to array
   if (is_readable($output_tab)) {
     $result_table = array();
     $fp = fopen($output_tab,'r');

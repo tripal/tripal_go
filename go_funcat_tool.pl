@@ -186,6 +186,13 @@ sub go_slim_analysis
 	if (scalar(keys(%$ID)) > 0) {
 		my $uncat = scalar(keys(%$ID));
 		print $out "Unclassified\t\t\t$uncat\n";
+
+		# append unclassified gene ID to result
+		open(FOUT, ">>".$out_slim) || die $!;
+		foreach my $id (sort keys (%$ID)) {
+			print FOUT "$id\tUnclassified\n";	
+		}
+		close(FOUT);
 	}
 	$out->close;
 }
