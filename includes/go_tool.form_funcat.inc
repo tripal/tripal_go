@@ -16,6 +16,10 @@ function go_tool_funcat_form($form, $form_state) {
     if (isset($_SESSION['tripal_rnaseq_analysis']['genes_str'])) {
       $default_lists = $_SESSION['tripal_rnaseq_analysis']['genes_str'];
     }
+    if (isset($_SESSION['tripal_rnaseq_analysis']['organism_id'])) {
+      $organism_id = $_SESSION['tripal_rnaseq_analysis']['organism_id'];
+      $organism = chado_generate_var('organism', array('organism_id'=>$organism_id));
+    }
   }
 
   //* choose GO dataset
@@ -33,8 +37,13 @@ function go_tool_funcat_form($form, $form_state) {
     'SELECT_DB' => 'Select a Dataset',
   );
 
+  $default_opt = 'SELECT_DB';
+
   foreach ($gaf_db as $nid => $gaf_array) {
     $options[$gaf_array[1]]  = $gaf_array[0];
+    if ($gaf_array[0] == $organism->common_name) {
+      $default_opt = $gaf_array[1];
+    }
     $db_type[$gaf_array[1]]  = $gaf_array[2];
     $db_expid[$gaf_array[1]] = $gaf_array[3];
   }
@@ -52,7 +61,7 @@ function go_tool_funcat_form($form, $form_state) {
     '#type' => 'select',
     '#title' => t('Dataset:'),
     '#options' => $options,
-    '#default_value' => 'SELECT_DB',
+    '#default_value' => $default_opt,
     '#ajax' => array(
       'callback' => 'ajax_go_tool_funcat_example_id_callback',
       'wrapper'  => 'id-textarea',
@@ -287,11 +296,13 @@ function ajax_go_tool_funcat_example_id_callback($form, $form_state) {
     $form['gaf_type']['#value'] = $db_type;
   }
 
-  if ($form_state['values']['example_id']) {
-    $form['query']['ID']['#value'] = $example_ids;
-  }
-  else {
-    $form['query']['ID']['#value'] = '';
+  if (!isset($_SESSION['tripal_rnaseq_analysis']['genes_str'])) {
+    if ($form_state['values']['example_id']) {
+      $form['query']['ID']['#value'] = $example_ids;
+    }
+    else {
+      $form['query']['ID']['#value'] = '';
+    }
   }
 
   return $form['query']['ID'];

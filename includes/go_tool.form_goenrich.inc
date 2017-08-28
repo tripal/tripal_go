@@ -16,6 +16,10 @@ function go_tool_enrich_form($form, $form_state) {
     if (isset($_SESSION['tripal_rnaseq_analysis']['genes_str'])) {
       $default_lists = $_SESSION['tripal_rnaseq_analysis']['genes_str'];
     }
+    if (isset($_SESSION['tripal_rnaseq_analysis']['organism_id'])) {
+      $organism_id = $_SESSION['tripal_rnaseq_analysis']['organism_id'];
+      $organism = chado_generate_var('organism', array('organism_id'=>$organism_id));
+    }
   }
 
   //* choose GO dataset
@@ -33,8 +37,13 @@ function go_tool_enrich_form($form, $form_state) {
     'SELECT_DB' => 'Select a Dataset',
   );
 
+  $default_opt = 'SELECT_DB';
+
   foreach ($gaf_db as $nid => $gaf_array) {
     $options[$gaf_array[1]]  = $gaf_array[0];
+    if ($gaf_array[0] == $organism->common_name) {
+      $default_opt = $gaf_array[1];
+    }
     $db_type[$gaf_array[1]]  = $gaf_array[2];
     $db_expid[$gaf_array[1]] = $gaf_array[3];
   }
@@ -52,7 +61,7 @@ function go_tool_enrich_form($form, $form_state) {
     '#type' => 'select',
     '#title' => t('Dataset:'),
     '#options' => $options,
-    '#default_value' => 'SELECT_DB',
+    '#default_value' => $default_opt,
     '#ajax' => array(
       'callback' => 'ajax_go_tool_enrich_example_id_callback',
       'wrapper'  => 'id-textarea',
@@ -65,8 +74,8 @@ function go_tool_enrich_form($form, $form_state) {
   //.........................
   $form['query'] = array(
     '#type' => 'fieldset',
-    '#title' => t('Enter the list of IDs.'),
-    '#description' => t('description of input ids'),
+    '#title' => t('Enter a list of gene IDs.'),
+    //'#description' => t('description of input ids'),
     '#collapsible' => TRUE,
     '#collapsed' => FALSE,
   );
@@ -88,7 +97,7 @@ function go_tool_enrich_form($form, $form_state) {
   // Textfield for submitting a ID list for query
   $form['query']['ID'] = array(
     '#type' => 'textarea',
-    '#title' => t('Enter gene IDs'),
+    //'#title' => t('Enter gene IDs'),
     '#description'=>t('Enter gene IDs in the text area.'),
     '#default_value' => $default_lists,
     '#prefix' => '<div id="id-textarea">',
@@ -98,7 +107,7 @@ function go_tool_enrich_form($form, $form_state) {
   // Upload a file as an alternative to enter a query ID
   $form['#attributes']['enctype'] = 'multipart/form-data';
   $form['query']['UPLOAD'] = array(
-    '#title' => 'Or upload the file containing the list of gene IDs:  ',
+    '#title' => 'Or upload the file containing gene IDs:  ',
     '#type' => 'managed_file',
     '#description' => t('The file should be a plain-text
   (.txt) file. Max size: %max_size. <strong>Don\'t forget to press the Upload button before
@@ -126,7 +135,7 @@ function go_tool_enrich_form($form, $form_state) {
 
   $form['choose_correction'] = array(
     '#type' => 'radios',
-    '#title' => t('Choose the p value correction method:'),
+    '#title' => t('Choose the <i>p</i>-value correction method:'),
     '#options' => array(
        'bonferroni' => t('Bonferroni'),
 	   'simulation' => t('Simulation'),
@@ -137,7 +146,7 @@ function go_tool_enrich_form($form, $form_state) {
 
   $form['cutoff_pvalue'] = array(
     '#type' => 'textfield',
-    '#title' => t('Enter a cutoff P-Value for Significant represented GO Terms:'), 
+    '#title' => t('Enter a cutoff <i>p</i>-value for Significant represented GO Terms:'), 
     '#default_value' => '0.05',
     '#maxlength' => 20,
     '#required' => TRUE,
@@ -360,15 +369,14 @@ function ajax_go_tool_enrich_example_id_callback($form, $form_state) {
   }
 
   // If the Show Example checkbox is true then put the example in the textfield
-  if ($form_state['values']['example_id']) {
-    $form['query']['ID']['#value'] = $example_ids;
+  if (!isset($_SESSION['tripal_rnaseq_analysis']['genes_str'])) {
+    if ($form_state['values']['example_id']) {
+      $form['query']['ID']['#value'] = $example_ids;
+    }
+    else {
+      $form['query']['ID']['#value'] = '';
+    }
   }
-  // Otherwise we want to remove the already displayed example.
-  else {
-    $form['query']['ID']['#value'] = '';
-  }
-
-  //dpm($form);
 
   return $form['query']['ID'];
 }

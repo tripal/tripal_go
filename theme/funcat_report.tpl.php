@@ -1,10 +1,25 @@
 <?php
 /**
- * Display the results of a BLAST job execution
+ * Display the results of GO slim gene classification
  */
-  // output pathway enrichment table
 
+// dispaly breadcrumb
+$nav = array();
+$nav[] = l('Home', '/');
+$nav[] = l('Gene classification', 'funcat');
+$nav[] = t('Gene classification result');
+$breadcrumb = '<nav class="nav">' . implode(" > ", $nav) . '</nav><br>';
+print $breadcrumb;
+
+  // output gene classification table
   if ($result_table) {
+
+    // download link
+    $go_slim_file = '../../' . $tripal_args['output_file'] . '.goslim.tab.txt';
+    $download_link = l('Tab-delimited Format', $go_slim_file );
+    print '<p>Download gene classification result: ' . $download_link . '</p>';
+
+    // table
     $header_data = array_keys($result_table[0]);
 	$header_data[] = "Genes";
 
@@ -23,7 +38,7 @@
         $line_html[0] = $line[$header_data[0]];
         $line_html[1] = 'NA';
         $line_html[2] = 'NA';
-        $line_html[3] = 'NA';
+        $line_html[3] = $line[$header_data[3]];
       } 
 
       $line_html[4] = 'NA';
