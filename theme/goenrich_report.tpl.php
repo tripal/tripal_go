@@ -14,7 +14,7 @@ print $breadcrumb;
   if ($html_info) {
     // download link
     $go_slim_file = '../../' . $tripal_args['output_file'];
-    $download_link = l('HTML Format', $go_slim_file );
+    $download_link = l('HTML format', $go_slim_file );
     print '<p>Download GO enrichment result: ' . $download_link . '</p>';
 
     // print result table

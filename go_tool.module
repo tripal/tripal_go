@@ -54,7 +54,7 @@ function go_tool_menu() {
 
   // GO enrich result page
   $items['goenrich/report/%'] = array(
-    'title' => 'GO term enrichment results',
+    'title' => 'GO term enrichment result',
     'page callback' => 'show_go_enrich_output',
     'page arguments' => array(2),
     'access arguments' => array('access content'),
@@ -63,7 +63,7 @@ function go_tool_menu() {
 
   // GO slim gene classification result page
   $items['funcat/report/%'] = array(
-    'title' => 'GO slim gene classification results',
+    'title' => 'GO slim gene classification result',
     'page callback' => 'show_go_funcat_output',
     'page arguments' => array(2),
     'access arguments' => array('access content'),

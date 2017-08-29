@@ -16,7 +16,7 @@ print $breadcrumb;
 
     // download link
     $go_slim_file = '../../' . $tripal_args['output_file'] . '.goslim.tab.txt';
-    $download_link = l('Tab-delimited Format', $go_slim_file );
+    $download_link = l('Tab-delimited format', $go_slim_file );
     print '<p>Download gene classification result: ' . $download_link . '</p>';
 
     // table
