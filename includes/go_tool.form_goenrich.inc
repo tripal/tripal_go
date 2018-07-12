@@ -41,7 +41,7 @@ function go_tool_enrich_form($form, $form_state) {
 
   foreach ($gaf_db as $nid => $gaf_array) {
     $options[$gaf_array[1]]  = $gaf_array[0];
-    if ($gaf_array[0] == $organism->common_name) {
+    if (isset($organism) && $gaf_array[0] == $organism->common_name) {
       $default_opt = $gaf_array[1];
     }
     $db_type[$gaf_array[1]]  = $gaf_array[2];
